@@ -2,17 +2,28 @@
 	"analysis": {
 		"analyzer": {
 			"index_ngram": {
+				"char_filter": [
+					"punctuationgreedy",
+					"remove_ws_hnr_suffix"
+				],
 				"tokenizer": "edge_ngram",
 				"filter": [
+					"preserving_word_delimiter",
 					"lowercase",
-					"german_normalization"
+					"german_normalization",
+					"asciifolding",
+					"unique"
 				]
 			},
 			"search_ngram": {
+				"char_filter": [
+					"punctuationgreedy"
+				],
 				"tokenizer": "standard",
 				"filter": [
 					"lowercase",
-					"german_normalization"
+					"german_normalization",
+					"asciifolding"
 				]
 			},
 			"index_raw": {
@@ -40,6 +51,16 @@
 					"unique"
 				],
 				"tokenizer": "standard"
+			},
+			"index_housenumber": {
+				"char_filter": [
+					"punctuationgreedy",
+					"remove_ws_hnr_suffix"
+				],
+				"filter": [
+					"lowercase",
+					"preserving_word_delimiter"],
+				"tokenizer": "standard" 
 			}
 		},
 		"tokenizer": {
@@ -56,13 +77,23 @@
 		"char_filter": {
 			"punctuationgreedy": {
 				"type": "pattern_replace",
-				"pattern": "[\\.,]"
+				"pattern": "[\\.,']",
+				"replacement": " "
+			},
+			"remove_ws_hnr_suffix": {
+				"type": "pattern_replace",
+				"pattern": "(\\d+)\\s(?=\\p{L}\\b)",
+				"replacement": "$1"
 			}
 		},
 		"filter": {
 			"photonlength": {
 				"min": "2",
 				"type": "length"
+			},
+			"preserving_word_delimiter": { 
+				"type": "word_delimiter",
+				"preserve_original": "true"
 			}
 		}
 	}

@@ -1,9 +1,6 @@
 package de.komoot.photon.query;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.PrecisionModel;
 import spark.QueryParamsMap;
 import spark.Request;
 
@@ -17,9 +14,10 @@ import java.util.Set;
  */
 public class PhotonRequestFactory {
     private final LanguageChecker languageChecker;
-    private final static GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+    private final static LocationParamConverter optionalLocationParamConverter = new LocationParamConverter(false);
 
-    protected static HashSet<String> m_hsRequestQueryParams = new HashSet<>(Arrays.asList("lang", "q", "lon", "lat", "limit", "distance_sort", "osm_tag"));
+    protected static HashSet<String> m_hsRequestQueryParams = new HashSet<>(Arrays.asList("lang", "q", "lon", "lat",
+            "limit", "osm_tag", "location_bias_scale", "debug"));
 
     public PhotonRequestFactory(Set<String> supportedLanguages) {
         this.languageChecker = new LanguageChecker(supportedLanguages);
@@ -44,25 +42,23 @@ public class PhotonRequestFactory {
         } catch (NumberFormatException e) {
             limit = 15;
         }
-        Point locationForBias = null;
-        try {
-            Double lon = Double.valueOf(webRequest.queryParams("lon"));
-            Double lat = Double.valueOf(webRequest.queryParams("lat"));
-            locationForBias = geometryFactory.createPoint(new Coordinate(lon, lat));
-        } catch (Exception nfe) {
-            //ignore
-        }
-        Boolean locationDistanceSort;
-        try {
-            locationDistanceSort = Boolean.valueOf(webRequest.queryParamOrDefault("distance_sort", "false"));
-        } catch (Exception nfe) {
-            throw new BadRequestException(400, "invalid parameter 'distance_sort', can only be true or false");
-        }
+        Point locationForBias = optionalLocationParamConverter.apply(webRequest);
+
+        // don't use too high default value, see #306
+        double scale = 1.6;
+        String scaleStr = webRequest.queryParams("location_bias_scale");
+        if (scaleStr != null && !scaleStr.isEmpty())
+            try {
+                scale = Double.parseDouble(scaleStr);
+            } catch (Exception nfe) {
+                throw new BadRequestException(400, "invalid parameter 'location_bias_scale' must be a number");
+            }
+
         QueryParamsMap tagFiltersQueryMap = webRequest.queryMap("osm_tag");
         if (!new CheckIfFilteredRequest().execute(tagFiltersQueryMap)) {
-            return (R) new PhotonRequest(query, limit, locationForBias, locationDistanceSort, language);
+            return (R) new PhotonRequest(query, limit, locationForBias, scale, language);
         }
-        FilteredPhotonRequest photonRequest = new FilteredPhotonRequest(query, limit, locationForBias, locationDistanceSort, language);
+        FilteredPhotonRequest photonRequest = new FilteredPhotonRequest(query, limit, locationForBias, scale, language);
         String[] tagFilters = tagFiltersQueryMap.values();
         setUpTagFilters(photonRequest, tagFilters);
 

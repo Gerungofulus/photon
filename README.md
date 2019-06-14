@@ -6,7 +6,17 @@ _Photon_ is an open source geocoder built for [OpenStreetMap](http://www.osm.org
 
 _Photon_ was started by [komoot](http://www.komoot.de) and provides search-as-you-type and multilingual support. It's used in production with thousands of requests per minute at [www.komoot.de](http://www.komoot.de). Find our public API and demo on [photon.komoot.de](http://photon.komoot.de).
 
+### Contribution
+
+All code contributions and bug reports are welcome!
+
+For questions please send an email to our mailing list https://lists.openstreetmap.org/listinfo/photon
+
 Feel free to test and participate!
+
+### Licence
+
+Photon software is open source and licensed under [Apache License, Version 2.0](http://opensource.org/licenses/Apache-2.0)
 
 ### Features
 - high performance
@@ -24,12 +34,6 @@ Feel free to test and participate!
 
 photon requires java, at least version 8.
 
-Get photon, at least 0.3, from [the releases](https://github.com/komoot/photon/releases) and start it:
-
-```bash
-java -jar photon-*.jar
-```
-
 Download the search index (53G gb compressed, worldwide coverage, languages: English, German, French and Italian). The search index is updated weekly and thankfully provided by [GraphHopper](https://www.graphhopper.com/) with the support of [lonvia](https://github.com/lonvia).
 
 Make sure you have bzip2 or pbzip2 installed and execute one of these two commands in your shell. This will download, uncompress and extract the huge database in one step:
@@ -39,10 +43,20 @@ wget -O - http://download1.graphhopper.com/public/photon-db-latest.tar.bz2 | bzi
 # you can significantly speed up extracting using pbzip2 (recommended):
 wget -O - http://download1.graphhopper.com/public/photon-db-latest.tar.bz2 | pbzip2 -cd | tar x
  ```
+ 
+Now get photon, at least 0.3, from [the releases](https://github.com/komoot/photon/releases) and start it:
+
+```bash
+java -jar photon-*.jar
+```
+
+Use the `-data-dir` option to point to the parent directory of `photon_data` if that directory is not in the default location `./photon_data`. Before you request photon ElasticSearch needs to load some data into memory so be patient for a few seconds.
 
 To use an older version of ElasticSearch please download the data from [here](http://download1.graphhopper.com/public/photon-ES-17-db-171019.tar.bz2) (Nov 2017) via wget as described above and use version [0.2.7 of photon](http://photon.komoot.de/data/photon-0.2.7.jar) (Oct 2016).
 
 Check the URL `http://localhost:2322/api?q=berlin` to see if photon is running without problems. You may want to use our [leaflet plugin](https://github.com/komoot/leaflet.photon) to see the results on a map.
+
+To enable CORS (cross-site requests), use `-cors-any` to allow any origin or `-cors-origin` with a specific origin as the argument. By default, CORS support is disabled.
 
 discover more of photon's feature with its usage `java -jar photon-*.jar -h`.
 
@@ -65,15 +79,15 @@ java -jar photon-*.jar -nominatim-import -host localhost -port 5432 -database no
 
 The import of worldwide data set will take some hours/days, ssd disk are recommended to accelerate nominatim queries.
 
-#### Updating from Nominatim
+#### Updating from OSM via Nominatim
 
-In order to update from nominatim, you must start photon with the nominatim database credentials on the command line:
+In order to update nominatim from OSM and then photon from nominatim, you must start photon with the nominatim database credentials on the command line:
 
 ```bash
 java -jar photon-*.jar -host localhost -port 5432 -database nominatim -user nominatim -password ...
 ```
 
-A nominatim setup is also a requirement to have continuous updates. To keep in sync with the latest OSM changes run:
+A nominatim setup is also a requirement to have continuous updates. To keep nominatim in sync with the latest OSM changes and to update photon with nominatim afterwards run:
 
 ```bash
 export NOMINATIM_DIR=/home/nominatim/...
@@ -97,6 +111,12 @@ http://localhost:2322/api?q=berlin
 #### Search with Location Bias
 ```
 http://localhost:2322/api?q=berlin&lon=10&lat=52
+```
+
+Increase this bias (range is 0.1 to 10, default is 1.6)
+
+```
+http://localhost:2322/api?q=berlin&lon=10&lat=52&location_bias_scale=2
 ```
 
 #### Reverse geocode a coordinate
@@ -127,7 +147,7 @@ If one or many query parameters named ```osm_tag``` are present, photon will att
 
 For example, to search for all places named ```berlin``` with tag of ```tourism=museum```, one should construct url as follows:
 ```
-http://localhost:2322/api?q=berlin&osm_tag=toursim:museum
+http://localhost:2322/api?q=berlin&osm_tag=tourism:museum
 ```
 
 Or, just by they key
@@ -194,9 +214,3 @@ http://localhost:2322/api?q=berlin&osm_tag=tourism
 
  - Photon's search configuration was developed with a specific test framework. It is written in Python and [hosted separately](https://github.com/yohanboniface/osm-geocoding-tester).
  - [R packge](https://github.com/rCarto/photon) to access photon's public API with [R](https://en.wikipedia.org/wiki/R_%28programming_language%29)
-
-### Contact
-Let us know what you think about photon! Create a github ticket or drop us an email in https://lists.openstreetmap.org/listinfo/photon
-
-### Licence
-Photon software is open source and licensed under [Apache License, Version 2.0](http://opensource.org/licenses/Apache-2.0)
